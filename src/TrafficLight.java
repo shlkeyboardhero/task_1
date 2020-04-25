@@ -32,10 +32,7 @@ public class TrafficLight {
         JPanel background = new JPanel(layout);
         background.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-
-        /**
-         * Реализация расположения кнопок (Старт, Стоп)!
-         */
+        
         Box buttonBox = new Box(BoxLayout.LINE_AXIS);
 
 
@@ -46,9 +43,7 @@ public class TrafficLight {
         JButton stop = new JButton("Stop");
         stop.addActionListener(new MyStopLight());
         buttonBox.add(stop);
-        /**
-         * Закончена реализация
-         */
+
 
         background.add(BorderLayout.SOUTH, buttonBox);
 
