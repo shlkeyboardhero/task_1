@@ -1,33 +1,33 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
 public class TrafficLight {
 
-    final static int SIZE = 75;
+    final static int CIRCLE_DIAMETER = 75;
     static Icon[] icons = new Icon[4];
 
     static {
-        icons[0] = new curveIcon(Color.red, SIZE);
-        icons[1] = new curveIcon(Color.yellow, SIZE);
-        icons[2] = new curveIcon(Color.GREEN, SIZE);
-        icons[3] = new curveIcon(Color.darkGray, SIZE);
+        icons[0] = new CurveIcon(Color.red, CIRCLE_DIAMETER);
+        icons[1] = new CurveIcon(Color.yellow, CIRCLE_DIAMETER);
+        icons[2] = new CurveIcon(Color.green, CIRCLE_DIAMETER);
+        icons[3] = new CurveIcon(Color.darkGray, CIRCLE_DIAMETER);
     }
 
+
     boolean action = false;
-    JPanel mainPanel, lightpanel;
-    JFrame theFrame;
+    JPanel mainPanel, lightPanel;
+    JFrame mainFrame;
     ButtonGroup groupConfiguration;
-    ArrayList<JRadioButton> radiobuttonList = new ArrayList<>(2);
-    ArrayList<JLabel> circlelists = new ArrayList<>(3);
+    ArrayList<JRadioButton> radioButtonList = new ArrayList<>(2);
+    ArrayList<JLabel> circleList = new ArrayList<>(3);
     String[] configurationName = {"Normal", "Standby"};
-    JButton start = new JButton("Start");
+    JButton startButton = new JButton("Start");
+
 
     public void buildGUI() {
-        theFrame = new JFrame("Traffic Light");
-        theFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        mainFrame = new JFrame("Traffic Light");
+        mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         BorderLayout layout = new BorderLayout();
         JPanel background = new JPanel(layout);
         background.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
@@ -35,20 +35,19 @@ public class TrafficLight {
         
         Box buttonBox = new Box(BoxLayout.LINE_AXIS);
 
-
-        start.addActionListener(new MyStartLight());
-        buttonBox.add(start);
+        startButton.addActionListener(event -> runLight());
+        buttonBox.add(startButton);
         buttonBox.add(Box.createHorizontalStrut(10));
 
-        JButton stop = new JButton("Stop");
-        stop.addActionListener(new MyStopLight());
-        buttonBox.add(stop);
+        JButton stopButton = new JButton("Stop");
+        stopButton.addActionListener(event -> stopLight());
+        buttonBox.add(stopButton);
 
 
         background.add(BorderLayout.SOUTH, buttonBox);
 
 
-        theFrame.getContentPane().add(background);
+        mainFrame.getContentPane().add(background);
 
         GridLayout grid = new GridLayout(3, 3);
         grid.setVgap(1);
@@ -58,43 +57,42 @@ public class TrafficLight {
         background.add(BorderLayout.WEST, mainPanel);
         groupConfiguration = new ButtonGroup();
 
-        for (int i = 0; i < configurationName.length; i++) {
-            JRadioButton c = new JRadioButton(configurationName[i]);
-            c.setSelected(false);
-            radiobuttonList.add(c);
-            groupConfiguration.add(c);
-            mainPanel.add(c);
+        for (String configurationNameItem: configurationName) {
+            JRadioButton radioButton = new JRadioButton(configurationNameItem);
+            radioButton.setSelected(false);
+            radioButtonList.add(radioButton);
+            groupConfiguration.add(radioButton);
+            mainPanel.add(radioButton);
         }
 
-        lightpanel = new JPanel(grid);
-        background.add(BorderLayout.CENTER, lightpanel);
+        lightPanel = new JPanel(grid);
+        background.add(BorderLayout.CENTER, lightPanel);
 
         for (int i = 0; i < 3; i++) {
             JLabel circle = new JLabel(icons[3]);
-            circlelists.add(circle);
-            lightpanel.add(circle);
+            circleList.add(circle);
+            lightPanel.add(circle);
         }
 
-        theFrame.setBounds(30, 30, 300, 300);
-        theFrame.pack();
-        theFrame.setVisible(true);
-        theFrame.setResizable(false);
-
+        mainFrame.setBounds(30, 30, 300, 300);
+        mainFrame.pack();
+        mainFrame.setVisible(true);
+        mainFrame.setResizable(false);
     }
 
     public ArrayList getList() {
-        return circlelists;
+        return circleList;
     }
 
     private void runLight() {
-        switch (ShowMode()) {
+        switch (showMode()) {
             case 1:
                 action = true;
-                runLightMode1();
+                runModeNormal();
                 break;
             case 2:
                 action = true;
-                runLightMode2();
+                runModeBlink();
                 break;
             default:
                 action = false;
@@ -104,22 +102,23 @@ public class TrafficLight {
     }
 
     private void stopLight() {
-        if (ShowMode() == 1) {
+        if (showMode() == 1) {
             JOptionPane.showMessageDialog(null, "Please wait traffic light");
         } else {
-            ElementsEnabled(true);
+            elementsEnabled(true);
         }
 
         action = false;
     }
 
-    private int ShowMode() {
+    private int showMode() {
         int mode = 0;
 
-        for (int i = 0; i < configurationName.length; i++) {
-            JRadioButton c = radiobuttonList.get(i);
 
-            if (c.isSelected()) {
+        for (int i = 0; i < radioButtonList.size(); i++) {
+            JRadioButton radioButton = radioButtonList.get(i);
+
+            if (radioButton.isSelected()) {
                 mode = i + 1;
                 break;
             }
@@ -129,104 +128,99 @@ public class TrafficLight {
         return mode;
     }
 
-    public void runLightMode1() {
-        ElementsEnabled(false);
 
-        Thread t = new Thread() {
-            public void run() {
+
+    public void runModeNormal() {
+        elementsEnabled(false);
+
+        new Thread(() -> {
                 while (true) {
                     try {
-                        ArrayList lst = getList();
-                        curveIcon cI1 = (curveIcon) ((JLabel) lst.get(0)).getIcon();
-                        curveIcon cI2 = (curveIcon) ((JLabel) lst.get(1)).getIcon();
-                        curveIcon cI3 = (curveIcon) ((JLabel) lst.get(2)).getIcon();
+                        setColor(true, false,false);
+                        Thread.sleep(6000);
+                        setColor(false, true,false);
+                        Thread.sleep(1800);
+                        setColor(false, false,true);
+                        Thread.sleep(4000);
 
-                        if (cI1.getColor().equals(Color.darkGray))
-                            ((JLabel) lst.get(0)).setIcon(icons[0]);
-                        ((JLabel) lst.get(1)).setIcon(icons[3]);
-                        ((JLabel) lst.get(2)).setIcon(icons[3]);
-                        sleep(6000);
-                        if (cI2.getColor().equals(Color.darkGray))
-                            ((JLabel) lst.get(0)).setIcon(icons[3]);
-                        ((JLabel) lst.get(1)).setIcon(icons[1]);
-                        ((JLabel) lst.get(2)).setIcon(icons[3]);
-                        sleep(1800);
-                        if (cI3.getColor().equals(Color.darkGray))
-                            ((JLabel) lst.get(0)).setIcon(icons[3]);
-                        ((JLabel) lst.get(1)).setIcon(icons[3]);
-                        ((JLabel) lst.get(2)).setIcon(icons[2]);
-                        sleep(4000);
                         if (!action) {
-                            for (int i = 0; i < 3; i++) {
-                                ((JLabel) lst.get(i)).setIcon(icons[3]);
-                            }
-                            ElementsEnabled(true);
-                            this.interrupt();
+                            clearColor();
+                            elementsEnabled(true);
                             break;
                         }
+                        setColor(false, true,false);
+                        Thread.sleep(1800);
+
+
                     } catch (InterruptedException ex) {
 
                     }
                 }
-            }
-        };
-        t.start();
+        }).start();
         System.out.println("Mode 1");
     }
 
-    public void ElementsEnabled(boolean t) {
-        start.setEnabled(t);
+    public void elementsEnabled(boolean enabled) {
+        SwingUtilities.invokeLater( () -> {
+            startButton.setEnabled(enabled);
 
-        for (int i = 0; i < 2; i++) {
-            JRadioButton c = radiobuttonList.get(i);
-            c.setEnabled(t);
-
-            if (t) {
-                c.setSelected(t);
+            for (JRadioButton radioButton : radioButtonList) {
+                radioButton.setEnabled(enabled);
             }
-        }
+        });
     }
 
-    public void runLightMode2() {
-        ElementsEnabled(false);
 
-        Thread t = new Thread() {
-            public void run() {
+
+    public void setColor (boolean red, boolean yellow,boolean green) {
+        clearColor();
+        SwingUtilities.invokeLater(() -> {
+            if (red) circleList.get(0).setIcon(icons[0]);
+
+            if (yellow) circleList.get(1).setIcon(icons[1]);
+
+            if (green) circleList.get(2).setIcon(icons[2]);
+        });
+    }
+
+    public void clearColor() {
+        SwingUtilities.invokeLater(() -> {
+            for (JLabel circles : circleList) {
+                circles.setIcon(icons[3]);
+            }
+        });
+    }
+
+    public void runModeBlink() {
+        elementsEnabled(false);
+
+        new Thread(() -> {
                 while (true) {
                     try {
-                        sleep(720);
-                        ArrayList lst = getList();
-                        curveIcon cI2 = (curveIcon) ((JLabel) lst.get(1)).getIcon();
-                        ((JLabel) lst.get(0)).setIcon(icons[3]);
-                        ((JLabel) lst.get(2)).setIcon(icons[3]);
-                        if (cI2.getColor().equals(Color.darkGray))
-                            ((JLabel) lst.get(1)).setIcon(icons[1]);
-                        else
-                            ((JLabel) lst.get(1)).setIcon(icons[3]);
+                        setColor(false, true, false);
+                        Thread.sleep(720);
+                        setColor(false, false, false);
+                        Thread.sleep(720);
                         if (!action) {
-                            for (int i = 0; i < 3; i++) {
-                                ((JLabel) lst.get(i)).setIcon(icons[3]);
-                            }
-                            this.interrupt();
+                            clearColor();
+                            elementsEnabled(true);
                             break;
                         }
                     } catch (InterruptedException ex) {
 
                     }
                 }
-            }
 
-        };
-        t.start();
+        }).start();
         System.out.println("Mode 2");
     }
 
-    static class curveIcon implements Icon {
+    static class CurveIcon implements Icon {
         int width;
         int height;
         Color useColor;
 
-        curveIcon(Color c, int s) {
+        CurveIcon(Color c, int s) {
             this.useColor = c;
             this.width = s;
             this.height = s;
@@ -249,18 +243,6 @@ public class TrafficLight {
 
         public Color getColor() {
             return useColor;
-        }
-    }
-
-    public class MyStartLight implements ActionListener {
-        public void actionPerformed(ActionEvent a) {
-            runLight();
-        }
-    }
-
-    public class MyStopLight implements ActionListener {
-        public void actionPerformed(ActionEvent a) {
-            stopLight();
         }
     }
 }
